@@ -10,23 +10,30 @@ import string
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 
+number_of_users = 10
+password_length = 25
+permissions = ["lambda:*", "event:*", "firehose:*"]
 
 class CdkAppStack(cdk.Stack):
 
     def __init__(self, scope: cdk.Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
+        '''
+        Create x number of users with a password with x number of random characters. 
+        This CDK script can be used to create a number of users for use in workshops or similar. 
+        Modify the permissions as needed for your purposes. 
+        '''
         bucket = s3.Bucket(self, 
         "MyFirstBucket", 
         versioned=True,)
         statement = iam.PolicyStatement(
-            actions = ["lambda:*", "event:*", "firehose:*"], resources = ["*"])
+            actions = permissions, resources = ["*"])
         group = iam.Group(self, 'test_group', )
         group.add_to_policy(statement)
         users = []
-        for i in range(10):
+        for i in range(number_of_users):
             account = {}
-            account['password'] = get_random_string(25)
+            account['password'] = get_random_string(password_length)
             account['user'] = f"user-{i}"
             user = iam.User(self, account['user'], groups = [group], password = cdk.SecretValue.plain_text(account['password']))
             # access_key = iam.CfnAccessKey(self, f"access_key-{i}", user_name = user.user_name)
