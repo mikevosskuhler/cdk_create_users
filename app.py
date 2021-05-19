@@ -11,7 +11,6 @@ from aws_cdk import core
 
 from cdk_app.cdk_app_stack import CdkAppStack
 
-
 app = core.App()
 CdkAppStack(app, "CdkAppStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
