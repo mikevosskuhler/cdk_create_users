@@ -1,6 +1,7 @@
 from aws_cdk import core as cdk
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_cloud9 as c9
 import csv
 import random
 import string
@@ -28,17 +29,19 @@ class CdkAppStack(cdk.Stack):
         versioned=True,)
         statement = iam.PolicyStatement(
             actions = permissions, resources = ["*"])
-        group = iam.Group(self, 'test_group', )
+        group = iam.Group(self, 'test_group', managed_policies = [iam.ManagedPolicy.from_managed_policy_arn(self, 'AWSCloud9User',managed_policy_arn = "arn:aws:iam::aws:policy/AWSCloud9User")])
         group.add_to_policy(statement)
         users = []
         for i in range(number_of_users):
-            account = {}
-            account['password'] = get_random_string(password_length)
-            account['user'] = f"user-{i}"
+            account = {'password' : get_random_string(password_length), 'user' : f"user-{i}"}
             user = iam.User(self, account['user'], groups = [group], password = cdk.SecretValue.plain_text(account['password']))
             # access_key = iam.CfnAccessKey(self, f"access_key-{i}", user_name = user.user_name)
             # print(type(access_key.attr_secret_access_key))
+            cloud9_env = c9.CfnEnvironmentEC2(self, f"cloud9_env_{i}", instance_type = 't2.micro', 
+                                                automatic_stop_time_minutes = 30, owner_arn = user.user_arn)
             users.append(account)
+            
+            
         with open('output.csv', "w") as f:
             dict_writer = csv.DictWriter(f, users[0].keys())
             dict_writer.writeheader()
