@@ -11,9 +11,9 @@ import string
 # being updated to use `cdk`.  You may delete this import if you don't need it.
 from aws_cdk import core
 
-number_of_users = 10
+number_of_users = 2
 password_length = 25
-permissions = ["lambda:*", "event:*", "firehose:*"]
+permissions = ["lambda:*", "event:*", "firehose:*", "cloudformation:*", "iam:*", "s3:*", "events:*"]
 
 class CdkAppStack(cdk.Stack):
 
@@ -40,7 +40,7 @@ class CdkAppStack(cdk.Stack):
             cloud9_env = c9.CfnEnvironmentEC2(self, f"cloud9_env_{i}", instance_type = 't2.micro', 
                                                 automatic_stop_time_minutes = 30, owner_arn = user.user_arn)
             users.append(account)
-            
+            cdk.CfnOutput(self, f"user-{i}:arn", value = user.user_name)
             
         with open('output.csv', "w") as f:
             dict_writer = csv.DictWriter(f, users[0].keys())
@@ -50,6 +50,12 @@ class CdkAppStack(cdk.Stack):
             
 def get_random_string(length):
     # choose from all lowercase letter
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
+    letters = string.ascii_letters + string.digits + string.punctuation
+    while True:
+        result_str = ''.join(random.choice(letters) for i in range(length))
+        if any(c.isupper() for c in result_str) \
+                and any(c.islower() for c in result_str) \
+                and any(c.isdigit() for c in result_str) \
+                and any(c in string.punctuation for c in result_str):
+            break
     return result_str
